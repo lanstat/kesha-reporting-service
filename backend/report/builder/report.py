@@ -2,7 +2,6 @@ from report.builder.datasource import CSVSource, MysqlSource
 from weasyprint import HTML, CSS
 from weasyprint.fonts import FontConfiguration
 from django.conf import settings
-from django.http import HttpResponse
 import re
 import base64
 import datetime
@@ -21,16 +20,31 @@ class Report:
     def __init__(self, name):
         self._report_id = name
         self._base_dir = join(settings.BASE_DIR, 'media', name)
-        with io.open(join(self._base_dir, 'report.html'), mode='r', encoding='utf-8') as f:
-            self.html = f.read()
-        self._parse()
-        self.__env = None
+        with io.open(join(self._base_dir, 'config.json'), mode='r', encoding='utf-8') as f:
+            self._config = json.loads(f.read())
+        loader = jinja2.FileSystemLoader('/tmp')
+        self.__env = jinja2.Environment(autoescape=False, loader=loader)
         self._variables = {}
         self._default_vars = {}
+        self._parameters = {}
+
+        self._prerender_hook = None
         self._set_default_variables()
+        self._set_filters()
+        self._load_external_filter()
         # locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
 
-    def _parse(self):
+    def set_variables(self, variables):
+        self._variables = variables
+
+    def _render_page(self, page, variables):
+        with io.open(join(self._base_dir, page), mode='r', encoding='utf-8') as f:
+            html = f.read()
+        temp = self.__env.from_string(self._parse_page(html))
+
+        return temp.render(**variables)
+
+    def _parse_page(self, html):
         base_path = self._base_dir
 
         def replace_image(match):
@@ -40,22 +54,7 @@ class Report:
             except:
                 tmp = 'src=""'
             return tmp
-        self.html = re.sub(r'img-src="((\w|/|\.)+)"', replace_image, self.html)
-
-    def set_variables(self, variables):
-        self._variables = variables
-
-    def render_report(self):
-        loader = jinja2.FileSystemLoader('/tmp')
-        self.__env = jinja2.Environment(autoescape=False, loader=loader)
-        self._set_filters()
-        self._load_external_filter()
-        temp = self.__env.from_string(self.html)
-
-        variables = {**self._default_vars, **self._variables}
-        self._parse_config(variables)
-
-        self.html = temp.render(**variables)
+        return re.sub(r'img-src="((\w|/|\.)+)"', replace_image, html)
 
     def _set_filters(self):
         m1 = importlib.import_module('report.builder.filters')
@@ -67,25 +66,30 @@ class Report:
         for name, callback in getmembers(m1, isfunction):
             if not name.startswith('core__'):
                 self.__env.filters[name] = callback
+            else:
+                if name == 'core__prerender':
+                    self._prerender_hook = callback
 
     def _set_default_variables(self):
         self._default_vars = {
             'now': datetime.date.today()
         }
 
-    def _parse_config(self, variables):
-        with io.open(join(self._base_dir, 'config.json'), mode='r', encoding='utf-8') as f:
-            config = json.loads(f.read())
+    def _parse_config(self):
         adapters = {}
-        parameters = {'var': 0}
-        for dt in config['sources']:
+        for dt in self._config['sources']:
             if dt['type'] == 'csv':
                 tmp = CSVSource(self._base_dir, dt)
-                adapters |= tmp.process(config['adapters'], parameters)
+                adapters |= tmp.process(self._config['adapters'],
+                                        self._parameters)
             elif dt['type'] == 'mysql':
                 tmp = MysqlSource(self._base_dir, dt)
-                adapters |= tmp.process(config['adapters'], parameters)
-        variables |= adapters
+                adapters |= tmp.process(self._config['adapters'],
+                                        self._parameters)
+
+        if self._prerender_hook is not None:
+            self._prerender_hook(adapters)
+        return adapters
 
     def __get_stylesheets(self):
         listing = []
@@ -95,56 +99,36 @@ class Report:
                 listing.append(CSS(path))
         return listing
 
-    def generate(self, filename):
-        self.render_report()
-        response = HttpResponse(content_type='application/pdf;')
-        response['Content-Disposition'] = 'inline; filename='+filename+'.pdf'
-        response['Content-Transfer-Encoding'] = 'binary'
+    def set_parameters(self, data):
+        for p in self._config['parameters']:
+            name = p['name']
+            if name in data:
+                self._parameters[name] = data[name]
+            elif 'default' in p:
+                self._parameters[name] = p['default']
+            else:
+                raise Exception('report parameter not defined')
+
+    def generate(self):
+        variables = {**self._default_vars, **self._variables}
+        variables |= self._parse_config()
+
         font_config = FontConfiguration()
-        HTML(string=self.html).write_pdf(
-            response,
-            font_config=font_config,
-            stylesheets=self.__get_stylesheets()
-        )
-        return response
+        stylesheets = self.__get_stylesheets()
+        pages = []
 
-    def generate_stream(self):
-        self.render_report()
-        font_config = FontConfiguration()
-        pdf = HTML(string=self.html).render(
-            font_config=font_config,
-            stylesheets=self.__get_stylesheets()
-        )
-
-        return pdf
-
-    def generate_file(self, filename):
-        self.render_report()
-        font_config = FontConfiguration()
-        pdf = HTML(string=self.html).write_pdf(
-            font_config=font_config,
-            stylesheets=self.__get_stylesheets()
-        )
-
-        media_dir = '/tmp/'
-        if os.path.exists(media_dir):
-            f = open(os.path.join(media_dir, filename + '.pdf'), 'wb')
-            f.write(pdf)
-
-        return filename + '.pdf'
-
-
-def merge_report(reports):
-    pages = []
-    current_pdf = None
-    for report in reports:
-        pdf = report.generate_stream()
-        if current_pdf is None:
-            current_pdf = pdf
-        for p in pdf.pages:
-            pages.append(p)
-    pdf = current_pdf.copy(pages).write_pdf()
-    return pdf
+        document = None
+        for page in self._config['pages']:
+            html = self._render_page(page, variables)
+            pdf = HTML(string=html).render(
+                font_config=font_config,
+                stylesheets=stylesheets
+            )
+            if document is None:
+                document = pdf
+            for p in pdf.pages:
+                pages.append(p)
+        return document.copy(pages).write_pdf()
 
 
 def file_to_url_image(file_path):

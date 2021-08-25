@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from report.builder.report import Report
+from django.http import HttpResponse
 
 def index(request):
     context = {}
@@ -7,4 +8,8 @@ def index(request):
 
 def generate_report(request):
     r = Report('tmp')
-    return r.generate('javier')
+    r.set_parameters(request.GET.dict())
+    file = r.generate()
+    http_response = HttpResponse(file, content_type='application/pdf')
+    http_response['Content-Disposition'] = 'filename="javier.pdf"'
+    return http_response
