@@ -1,0 +1,65 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block head %}
+<script src="{% static 'codemirror/lib/codemirror.js'%}"></script>
+<link href="{% static 'codemirror/lib/codemirror.css' %}" rel="stylesheet" />
+<script src="{% static 'codemirror/mode/sql/sql.js'%}"></script>
+<style>
+  .CodeMirror {
+    height: 700px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<ul class="nav nav-tabs">
+  <li class="nav-item">
+    <a class="nav-link active" href="#">Page</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#">Data source</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#">Mixin</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#">Assets</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#">Styles</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#">Library</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#">Settings</a>
+  </li>
+</ul>
+<div class="row">
+  <div class="col-2">
+    <div class="list-group list-group-flush">
+  <a href="#" class="list-group-item list-group-item-action active" aria-current="true">
+    The current link item
+  </a>
+  <a href="#" class="list-group-item list-group-item-action">A second link item</a>
+  <a href="#" class="list-group-item list-group-item-action">A third link item</a>
+  <a href="#" class="list-group-item list-group-item-action">A fourth link item</a>
+  <a href="#" class="list-group-item list-group-item-action disabled" tabindex="-1" aria-disabled="true">A disabled link item</a>
+</div>
+  </div>
+  <div class="col">
+    <div id="codemirror"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+  var myCodeMirror = CodeMirror(document.getElementById('codemirror'), {
+    value: "select * from a;\n",
+    mode:  "sql",
+    lineNumbers: true,
+  });
+</script>
+{% endblock %}
