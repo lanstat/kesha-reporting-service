@@ -20,7 +20,9 @@ class Report:
     def __init__(self, name):
         self._report_id = name
         self._base_dir = join(settings.BASE_DIR, 'media', name)
-        with io.open(join(self._base_dir, 'config.json'), mode='r', encoding='utf-8') as f:
+        with io.open(join(self._base_dir, 'config.json'),
+                     mode='r',
+                     encoding='utf-8') as f:
             self._config = json.loads(f.read())
         loader = jinja2.FileSystemLoader('/tmp')
         self.__env = jinja2.Environment(autoescape=False, loader=loader)
@@ -38,7 +40,8 @@ class Report:
         self._variables = variables
 
     def _render_page(self, page, variables):
-        with io.open(join(self._base_dir, page), mode='r', encoding='utf-8') as f:
+        with io.open(join(self._base_dir, page), mode='r',
+                     encoding='utf-8') as f:
             html = f.read()
         temp = self.__env.from_string(self._parse_page(html))
 
@@ -54,6 +57,7 @@ class Report:
             except:
                 tmp = 'src=""'
             return tmp
+
         return re.sub(r'img-src="((\w|/|\.)+)"', replace_image, html)
 
     def _set_filters(self):
@@ -71,9 +75,7 @@ class Report:
                     self._prerender_hook = callback
 
     def _set_default_variables(self):
-        self._default_vars = {
-            'now': datetime.date.today()
-        }
+        self._default_vars = {'now': datetime.date.today()}
 
     def _parse_config(self):
         adapters = {}
@@ -120,15 +122,36 @@ class Report:
         document = None
         for page in self._config['pages']:
             html = self._render_page(page, variables)
-            pdf = HTML(string=html).render(
-                font_config=font_config,
-                stylesheets=stylesheets
-            )
+            pdf = HTML(string=html).render(font_config=font_config,
+                                           stylesheets=stylesheets)
             if document is None:
                 document = pdf
             for p in pdf.pages:
                 pages.append(p)
         return document.copy(pages).write_pdf()
+
+    @staticmethod
+    def validate_config(path):
+        config_path = join(path, 'config.json')
+        if not os.path.exists(config_path):
+            return False
+
+        with io.open(config_path,
+                     mode='r',
+                     encoding='utf-8') as f:
+            config = json.loads(f.read())
+        if not 'adapters' in config:
+            return False
+        if not 'sources' in config:
+            return False
+        if not 'pages' in config:
+            return False
+        elif len(config['pages']) == 0:
+            return False
+        if not 'parameters' in config:
+            return False
+
+        return True
 
 
 def file_to_url_image(file_path):
@@ -138,7 +161,8 @@ def file_to_url_image(file_path):
             encoded_string = base64.b64encode(image_file.read())
             if file_path.endswith('.png'):
                 mime = 'png'
-        tmp = 'data:image/' + mime + ';base64,' + encoded_string.decode('utf-8')
+        tmp = 'data:image/' + mime + ';base64,' + encoded_string.decode(
+            'utf-8')
         return tmp
     else:
         return ''

@@ -38,12 +38,10 @@ class MysqlSource(DataSource):
     def process(self, adapters, parameters):
         response = {}
 
-        db = MySQLdb.connect(
-            host = self._data['host'],
-            user = self._data['username'],
-            passwd = self._data['password'],
-            database = self._data['database']
-        )
+        db = MySQLdb.connect(host=self._data['host'],
+                             user=self._data['username'],
+                             passwd=self._data['password'],
+                             database=self._data['database'])
 
         cursor = db.cursor()
 
@@ -58,9 +56,15 @@ class MysqlSource(DataSource):
             cursor.execute(query)
             columns = cursor.description
             if 'single-row' in ad['data'] and ad['data']['single-row']:
-                result = {columns[index][0]:column for index, column in enumerate(cursor.fetchone())}
+                result = {
+                    columns[index][0]: column
+                    for index, column in enumerate(cursor.fetchone())
+                }
             else:
-                result = [{columns[index][0]:column for index, column in enumerate(value)} for value in cursor.fetchall()]
+                result = [{
+                    columns[index][0]: column
+                    for index, column in enumerate(value)
+                } for value in cursor.fetchall()]
             response['_' + ad['name']] = result
         cursor.close()
         db.close()
