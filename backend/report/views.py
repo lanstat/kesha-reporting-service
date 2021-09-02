@@ -2,8 +2,9 @@ from report.builder.report import Report
 from django.http import HttpResponse, Http404
 from rest_framework.views import APIView
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from .models import Report as ReportModel
 from .serializers import ReportSerializer
 import shutil
@@ -28,6 +29,7 @@ def make_archive(source):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def download_report(request, pk):
     try:
         record = ReportModel.objects.get(code=pk)
@@ -45,6 +47,7 @@ def download_report(request, pk):
 
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def generate_report(request, pk):
     try:
         record = ReportModel.objects.get(code=pk)
@@ -60,6 +63,8 @@ def generate_report(request, pk):
 
 
 class ReportList(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         reports = ReportModel.objects.all()
         serializer = ReportSerializer(reports, many=True)
@@ -74,6 +79,8 @@ class ReportList(APIView):
 
 
 class ReportDetail(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get_object(self, pk):
         try:
             return ReportModel.objects.get(code=pk)
