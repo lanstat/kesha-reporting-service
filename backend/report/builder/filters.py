@@ -1,13 +1,6 @@
 import base64
 
 
-def money(input):
-    if input is not None:
-        return '{:,.2f}'.format(input)
-    else:
-        return '0.00'
-
-
 def money_int(input):
     if input is not None:
         return '{:,.0f}'.format(input)

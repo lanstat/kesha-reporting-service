@@ -1,5 +1,7 @@
 <h1 align="center">Kesha Reporting Service (KRS)</h1>
-
+<div align="center">
+  <img src="logo.png" height="100"/>
+</div>
 <div align="center">
   <strong>HTML based reporting service</strong>
 </div>
@@ -30,25 +32,25 @@
 Configuration file example
 ```json
 {
-	"pages": [
-		"report.html"
-	],
-	"sources": [
-		{
-			"name": "test",
-			"type": "csv",
-			"data": {
-				"file": "csv.csv"
-			}
-		}
-	],
-	"adapters": [],
-	"parameters": [
-		{
-			"name": "var",
-			"default": 5
-		}
-	]
+  "pages": [
+    "report.html"
+  ],
+  "sources": [
+    {
+      "name": "test",
+      "type": "csv",
+      "data": {
+        "file": "csv.csv"
+      }
+    }
+  ],
+  "adapters": [],
+  "parameters": [
+    {
+      "name": "var",
+      "default": 5
+    }
+  ]
 }
 ```
 
@@ -62,10 +64,10 @@ $ docker pull lanstat/krs
 - Add support to mssql database
 - Add user management
 - Add API documentation
-- Add support to custom ttf
 - Add support to web service datasource
 - Add complex examples
 - Add test cases
 
 ## License
 [MIT](https://tldrlegal.com/license/mit-license)
+

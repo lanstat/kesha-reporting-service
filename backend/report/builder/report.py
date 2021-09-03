@@ -66,6 +66,9 @@ class Report:
             self.__env.filters[name] = callback
 
     def _load_external_filter(self):
+        path_custom = join(self._base_dir, 'custom.py')
+        if not os.path.exists(path_custom):
+            return
         m1 = importlib.import_module('media.' + self._report_id + '.custom')
         for name, callback in getmembers(m1, isfunction):
             if not name.startswith('core__'):
@@ -115,15 +118,13 @@ class Report:
         variables = {**self._default_vars, **self._variables}
         variables |= self._parse_config()
 
-        font_config = FontConfiguration()
         stylesheets = self.__get_stylesheets()
         pages = []
 
         document = None
         for page in self._config['pages']:
             html = self._render_page(page, variables)
-            pdf = HTML(string=html).render(font_config=font_config,
-                                           stylesheets=stylesheets)
+            pdf = HTML(string=html).render(stylesheets=stylesheets)
             if document is None:
                 document = pdf
             for p in pdf.pages:
@@ -136,9 +137,7 @@ class Report:
         if not os.path.exists(config_path):
             return False
 
-        with io.open(config_path,
-                     mode='r',
-                     encoding='utf-8') as f:
+        with io.open(config_path, mode='r', encoding='utf-8') as f:
             config = json.loads(f.read())
         if not 'adapters' in config:
             return False

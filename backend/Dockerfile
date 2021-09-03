@@ -1,5 +1,6 @@
 FROM python:3.9.4-alpine
 ENV PYTHONUNBUFFERED=1
+ENV DEBUG=False
 
 WORKDIR /code
 COPY requirements.txt /code/
@@ -9,6 +10,9 @@ RUN apk update \
 	&& pip install -r requirements.txt \
 	&& apk del build-deps
 COPY . /code/
+
+RUN mkdir -p /code/db/
+RUN mkdir -p ${HOME}/.fonts/
 
 EXPOSE 8000
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
