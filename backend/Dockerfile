@@ -6,7 +6,7 @@ WORKDIR /code
 COPY requirements.txt /code/
 RUN apk update \
 	&& apk add --no-cache --virtual build-deps build-base libffi-dev jpeg-dev zlib-dev libjpeg \
-	&& apk add cairo cairo-tools pango-dev gdk-pixbuf fontconfig ttf-opensans mariadb-dev \
+	&& apk add cairo cairo-tools pango-dev gdk-pixbuf fontconfig ttf-opensans mariadb-dev postgresql-dev musl-dev \
 	&& pip install -r requirements.txt \
 	&& apk del build-deps
 COPY . /code/

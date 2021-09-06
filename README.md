@@ -58,9 +58,13 @@ Configuration file example
 ```sh
 $ docker pull lanstat/krs
 ```
+### Create docker image
+```sh
+$ cd backend
+$ docker build -f Dockerfile -t lanstat/krs .
+```
 
 ## TODO
-- Add support to postgres database
 - Add support to mssql database
 - Add API documentation
 - Add support to web service datasource

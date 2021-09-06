@@ -1,4 +1,4 @@
-from report.builder.datasource import CSVSource, MysqlSource
+from report.builder.datasource import CSVSource, MysqlSource, PostgresSource
 from weasyprint import HTML, CSS
 from weasyprint.fonts import FontConfiguration
 from django.conf import settings
@@ -89,6 +89,10 @@ class Report:
                                         self._parameters)
             elif dt['type'] == 'mysql':
                 tmp = MysqlSource(self._base_dir, dt)
+                adapters |= tmp.process(self._config['adapters'],
+                                        self._parameters)
+            elif dt['type'] == 'postgres':
+                tmp = PostgresSource(self._base_dir, dt)
                 adapters |= tmp.process(self._config['adapters'],
                                         self._parameters)
 
