@@ -62,7 +62,6 @@ $ docker pull lanstat/krs
 ## TODO
 - Add support to postgres database
 - Add support to mssql database
-- Add user management
 - Add API documentation
 - Add support to web service datasource
 - Add complex examples
