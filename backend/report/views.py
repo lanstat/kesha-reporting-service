@@ -1,4 +1,6 @@
 from report.builder.report import Report
+from rest_framework.parsers import MultiPartParser
+from rest_framework.decorators import parser_classes
 from django.http import HttpResponse, Http404
 from rest_framework.views import APIView
 from rest_framework import status
@@ -6,8 +8,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .models import Report as ReportModel
-from .serializers import ReportSerializer
+from .serializers import ReportRequestSerializer, ReportSerializer
 import shutil
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from django.conf import settings
 from os.path import join
 import os
@@ -28,9 +32,19 @@ def make_archive(source):
     return zip_buffer
 
 
+@swagger_auto_schema(method='get',
+                     manual_parameters=[
+                         openapi.Parameter('id',
+                                           openapi.IN_PATH,
+                                           type=openapi.TYPE_STRING)
+                     ],
+                     responses={200: 'success'})
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def download_report(request, pk):
+    """
+    Download the packet report specified
+    """
     try:
         record = ReportModel.objects.get(code=pk)
     except:
@@ -65,13 +79,20 @@ def generate_report(request, pk):
 class ReportList(APIView):
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(responses={200: ReportSerializer(many=True)})
     def get(self, request):
         reports = ReportModel.objects.all()
         serializer = ReportSerializer(reports, many=True)
         return Response(serializer.data)
 
+    @swagger_auto_schema(request_body=ReportRequestSerializer,
+                         responses={200: ReportSerializer})
+    @parser_classes([MultiPartParser])
     def post(self, request):
-        serializer = ReportSerializer(data=request.data)
+        """
+        Store a new report configuration
+        """
+        serializer = ReportRequestSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)

@@ -1,6 +1,5 @@
-from report.builder.datasource import CSVSource, MysqlSource, PostgresSource
+from report.builder.datasource import CSVSource
 from weasyprint import HTML, CSS
-from weasyprint.fonts import FontConfiguration
 from django.conf import settings
 import re
 import base64
@@ -16,7 +15,16 @@ import json
 from inspect import getmembers, isfunction
 
 
+def import_class(name):
+    components = name.split('.')
+    mod = __import__(components[0])
+    for comp in components[1:]:
+        mod = getattr(mod, comp)
+    return mod
+
+
 class Report:
+
     def __init__(self, name):
         self._report_id = name
         self._base_dir = join(settings.BASE_DIR, 'media', name)
@@ -88,11 +96,13 @@ class Report:
                 adapters |= tmp.process(self._config['adapters'],
                                         self._parameters)
             elif dt['type'] == 'mysql':
-                tmp = MysqlSource(self._base_dir, dt)
+                datasource = import_class('report.builder.postgres_source.MysqlSource')
+                tmp = datasource(self._base_dir, dt)
                 adapters |= tmp.process(self._config['adapters'],
                                         self._parameters)
             elif dt['type'] == 'postgres':
-                tmp = PostgresSource(self._base_dir, dt)
+                datasource = import_class('report.builder.postgres_source.PostgresSource')
+                tmp = datasource(self._base_dir, dt)
                 adapters |= tmp.process(self._config['adapters'],
                                         self._parameters)
 

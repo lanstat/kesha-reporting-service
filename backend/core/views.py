@@ -1,4 +1,6 @@
 from django.http import Http404
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -10,9 +12,16 @@ from .models import Font
 import subprocess
 
 
+@swagger_auto_schema(
+    method='post',
+    responses={204:'success'}
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def scan_all_fonts(request):
+    """
+    Scan and register all fonts installed in the system
+    """
     Font.objects.all().delete()
     result = subprocess.run(['fc-list'],
                             stdout=subprocess.PIPE).stdout
@@ -35,7 +44,13 @@ def scan_all_fonts(request):
 class FontList(APIView):
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        responses={200:FontSerializer(many=True)}
+    )
     def get(self, request):
+        """
+        Return a list of all registered fonts
+        """
         records = Font.objects.all()
 
         family = request.GET.get('family', None)
@@ -45,7 +60,14 @@ class FontList(APIView):
         serializer = FontSerializer(records, many=True)
         return Response(serializer.data)
 
+    @swagger_auto_schema(
+        request_body=FontSerializer,
+        responses={200:FontSerializer}
+    )
     def post(self, request):
+        """
+        Store a new font
+        """
         serializer = FontSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -62,12 +84,26 @@ class FontDetail(APIView):
         except:
             raise Http404
 
+    @swagger_auto_schema(
+        manual_parameters=[openapi.Parameter('id', openapi.IN_PATH, type=openapi.TYPE_INTEGER)],
+        responses={200:FontSerializer}
+    )
     def get(self, request, pk):
+        """
+        Get a specific font information
+        """
         record = self.get_object(pk)
         serializer = FontSerializer(record)
         return Response(serializer.data)
 
+    @swagger_auto_schema(
+        manual_parameters=[openapi.Parameter('id', openapi.IN_PATH, type=openapi.TYPE_INTEGER)],
+        responses={204: 'Success'}
+    )
     def delete(self, request, pk):
+        """
+        Delete a specific font
+        """
         record = self.get_object(pk)
         source = record.source
         if '/.fonts/' in source:

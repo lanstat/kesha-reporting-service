@@ -13,8 +13,12 @@ from django.utils import timezone
 
 class ReportSerializer(serializers.Serializer):
     code = serializers.CharField(max_length=10)
-    file = serializers.FileField(write_only=True)
-    created = serializers.DateTimeField(read_only=True)
+    created = serializers.DateTimeField()
+
+
+class ReportRequestSerializer(serializers.Serializer):
+    code = serializers.CharField(max_length=10)
+    file = serializers.FileField()
 
     def validate(self, attrs):
         file = attrs['file']
