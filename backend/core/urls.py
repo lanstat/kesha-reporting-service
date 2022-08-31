@@ -1,9 +1,11 @@
 from django.urls import path
+from rest_framework import routers
 
 from . import views
 
-urlpatterns = [
-    path('font/', views.FontList.as_view()),
-    path('font/<int:pk>/', views.FontDetail.as_view()),
-    path('font/scan/', views.scan_all_fonts),
-]
+router = routers.DefaultRouter()
+router.register('font', views.FontViewSet, 'font')
+
+urlpatterns = []
+
+urlpatterns += router.urls

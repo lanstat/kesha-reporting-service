@@ -13,11 +13,14 @@ from pathlib import Path
 
 
 class FontSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    family = serializers.CharField(read_only=True)
-    style = serializers.CharField(read_only=True)
-    file = serializers.FileField(write_only=True)
-    created = serializers.DateTimeField(read_only=True)
+    id = serializers.IntegerField()
+    family = serializers.CharField()
+    style = serializers.CharField()
+    created = serializers.DateTimeField()
+
+
+class FontStoreSerializer(serializers.Serializer):
+    file = serializers.FileField()
 
     def validate(self, attrs):
         file = attrs['file']

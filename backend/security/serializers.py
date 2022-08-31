@@ -1,12 +1,15 @@
 from rest_framework import serializers
-from django.utils import timezone
 from django.contrib.auth.models import User
 
 
 class UserSerializer(serializers.Serializer):
-    username = serializers.CharField()
     email = serializers.EmailField()
-    password = serializers.CharField(write_only=True, max_length=50)
+    username = serializers.CharField()
+
+
+class UserStoreSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(max_length=50)
 
     def create(self, validated_data):
         user = User.objects.create_user(validated_data['username'],
@@ -22,3 +25,7 @@ class UserSerializer(serializers.Serializer):
         instance.save()
 
         return instance
+
+
+class UserCreateSerializer(UserStoreSerializer):
+    username = serializers.CharField()

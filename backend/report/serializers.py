@@ -16,9 +16,8 @@ class ReportSerializer(serializers.Serializer):
     created = serializers.DateTimeField()
 
 
-class ReportRequestSerializer(serializers.Serializer):
-    code = serializers.CharField(max_length=10)
-    file = serializers.FileField()
+class ReportUpdateSerializer(serializers.Serializer):
+    file = serializers.FileField(write_only=True)
 
     def validate(self, attrs):
         file = attrs['file']
@@ -26,8 +25,8 @@ class ReportRequestSerializer(serializers.Serializer):
             random.choices(string.ascii_uppercase + string.digits, k=10))
         default_storage.save('tmp/' + filename + '.zip', file)
         file_path = join(settings.BASE_DIR, 'tmp', filename + '_dec')
-        shutil.unpack_archive(
-            join(settings.BASE_DIR, 'tmp', filename + '.zip'), file_path)
+        shutil.unpack_archive(join(settings.BASE_DIR, 'tmp', filename + '.zip'),
+                              file_path)
 
         os.remove(join(settings.BASE_DIR, 'tmp', filename + '.zip'))
         if ReportBuilder.validate_config(file_path):
@@ -54,3 +53,7 @@ class ReportRequestSerializer(serializers.Serializer):
                     join(settings.BASE_DIR, 'media', instance.code))
 
         return instance
+
+
+class ReportCreateSerializer(ReportUpdateSerializer):
+    code = serializers.CharField(max_length=10)

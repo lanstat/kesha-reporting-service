@@ -66,7 +66,6 @@ $ docker build -f Dockerfile -t lanstat/krs .
 
 ## TODO
 - Add support to mssql database
-- Add API documentation
 - Add support to web service datasource
 - Add complex examples
 - Add test cases
